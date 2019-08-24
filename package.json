@@ -1,8 +1,9 @@
 {
   "name": "rn-ble-pic",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "version": "0.0.1",
+  "description": "A complete BLE module for react native applications",
+  "main": "BLEManager",
+  "types": "./index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -11,6 +12,9 @@
   ],
   "author": "",
   "license": "",
+  "devDependencies": {
+    "react-native": "^0.41.2"
+  },
   "peerDependencies": {
     "react-native": "^0.41.2"
   }
