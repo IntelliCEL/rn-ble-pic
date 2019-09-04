@@ -1,6 +1,6 @@
 {
   "_from": "rn-ble-pic",
-  "_id": "rn-ble-pic@0.0.2",
+  "_id": "rn-ble-pic@0.0.4",
   "_inBundle": false,
   "_integrity": "sha512-8Ol8+3EkNPJ4X4xG9ATyHWk54b+0/peFxOl/khqPSC5lVhNvQMQlzpdSER0g93e5/9SqHtgkPuANfUCOhYXaqw==",
   "_location": "/rn-ble-pic",
@@ -18,7 +18,7 @@
   "_requiredBy": [
     "/"
   ],
-  "_resolved": "https://registry.npmjs.org/rn-ble-pic/-/rn-ble-pic-0.0.2.tgz",
+  "_resolved": "https://registry.npmjs.org/rn-ble-pic/-/rn-ble-pic-0.0.4.tgz",
   "_shasum": "c3049490bcfd40d421fe3b5c77ae9599e4e97410",
   "_spec": "rn-ble-pic",
   "author": {
@@ -56,5 +56,5 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "types": "./index.d.ts",
-  "version": "0.0.2"
+  "version": "0.0.4"
 }

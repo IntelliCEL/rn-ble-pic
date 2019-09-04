@@ -264,6 +264,7 @@ class BLEManager extends ReactContextBaseJavaModule implements ActivityEventList
     public void stopAdvertising(){
         if (gattServer != null) {
             gattServer.close();
+            gattServer = null;
         }
 		bluetoothAdapter = getBluetoothAdapter();
         if (bluetoothAdapter !=null && bluetoothAdapter.isEnabled() && advertiser != null) {
