@@ -37,8 +37,24 @@
 ## Usage
 
 ```javascript
-import RNBlePic from "rn-ble-pic";
+// get an instance of BLEPIC module
+import BLEPIC from "rn-ble-pic";
 
-// TODO: What to do with the module?
-RNBlePic;
+// add peripheral name
+BLEPIC.setPeripheralName(name: string);
+
+// add services
+BLEPIC.addService(serviceUUID: string, primary: boolean, serviceData: string);
+
+// add characteristics to a service
+BLEPIC.addCharacteristicToService(serviceUUID: string, charUUID: string, permissions: int, properties: int, data: string);
+
+// start advertising
+BLEPIC.startAdvertising();
+
+// check if currently advertising or not
+BLEPIC.isAdvertising();
+
+// stop advertising
+BLEPIC.stopAdvertising();
 ```

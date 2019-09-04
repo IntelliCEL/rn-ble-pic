@@ -100,16 +100,13 @@ class BLEManager extends ReactContextBaseJavaModule implements ActivityEventList
         }
 
         @Override
-        public void onCharacteristicReadRequest(BluetoothDevice device, int requestId, int offset,
-                                                BluetoothGattCharacteristic characteristic) {
+        public void onCharacteristicReadRequest(BluetoothDevice device, int requestId, int offset, BluetoothGattCharacteristic characteristic) {
             super.onCharacteristicReadRequest(device, requestId, offset, characteristic);
             if (offset != 0) {
-                gattServer.sendResponse(device, requestId, BluetoothGatt.GATT_INVALID_OFFSET, offset,
-                        /* value (optional) */ null);
+                gattServer.sendResponse(device, requestId, BluetoothGatt.GATT_INVALID_OFFSET, offset, null);
                 return;
             }
-            gattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS,
-                    offset, characteristic.getValue());
+            gattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, offset, characteristic.getValue());
         }
 
         @Override
@@ -118,11 +115,8 @@ class BLEManager extends ReactContextBaseJavaModule implements ActivityEventList
         }
 
         @Override
-        public void onCharacteristicWriteRequest(BluetoothDevice device, int requestId,
-                                                 BluetoothGattCharacteristic characteristic, boolean preparedWrite, boolean responseNeeded,
-                                                 int offset, byte[] value) {
-            super.onCharacteristicWriteRequest(device, requestId, characteristic, preparedWrite,
-                    responseNeeded, offset, value);
+        public void onCharacteristicWriteRequest(BluetoothDevice device, int requestId, BluetoothGattCharacteristic characteristic, boolean preparedWrite, boolean responseNeeded, int offset, byte[] value) {
+            super.onCharacteristicWriteRequest(device, requestId, characteristic, preparedWrite, responseNeeded, offset, value);
             characteristic.setValue(value);
             WritableMap map = Arguments.createMap();
             WritableArray data = Arguments.createArray();
@@ -188,10 +182,11 @@ class BLEManager extends ReactContextBaseJavaModule implements ActivityEventList
     }
 
 	@ReactMethod
-    public void startAdvertising(final Callback callback){
+    public void startAdvertising(final Callback callback) {
 		bluetoothManager = getBluetoothManager();
 		bluetoothAdapter = getBluetoothAdapter();
 
+        // Ensures if Bluetooth is available on the device and also it is enabled.
 		if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled()) {
 			Log.d(LOG_TAG, "Bluetooth not supported or not enabled.");
 			callback.invoke("Bluetooth not supported or not enabled.");
@@ -201,9 +196,6 @@ class BLEManager extends ReactContextBaseJavaModule implements ActivityEventList
 		if(this.name != null) {
         	bluetoothAdapter.setName(this.name);
 		}
-
-        // Ensures Bluetooth is available on the device and it is enabled. If not,
-        // displays a dialog requesting user permission to enable Bluetooth.
 
         bluetoothDevices = new HashSet<>();
         gattServer = getBluetoothGattServer();
@@ -217,7 +209,6 @@ class BLEManager extends ReactContextBaseJavaModule implements ActivityEventList
                 .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
                 .setConnectable(true)
                 .build();
-
 
         AdvertiseData.Builder dataBuilder = new AdvertiseData.Builder()
                 .setIncludeDeviceName(true);
@@ -256,21 +247,22 @@ class BLEManager extends ReactContextBaseJavaModule implements ActivityEventList
     }
 
 	@ReactMethod
-    public boolean isAdvertising(){
+    public boolean isAdvertising() {
         return this.advertising;
     }
 
 	@ReactMethod
-    public void stopAdvertising(){
+    public void stopAdvertising() {
         if (gattServer != null) {
+            gattServer.clearServices();
             gattServer.close();
             gattServer = null;
         }
 		bluetoothAdapter = getBluetoothAdapter();
         if (bluetoothAdapter !=null && bluetoothAdapter.isEnabled() && advertiser != null) {
-            // If stopAdvertising() gets called before close() a null
-            // pointer exception is raised.
+            // Calling stopAdvertising() before calling GATT server's close() method will throw a null pointer exception
             advertiser.stopAdvertising(advertisingCallback);
+            advertising = false;
         }
     }
 
@@ -295,8 +287,7 @@ class BLEManager extends ReactContextBaseJavaModule implements ActivityEventList
 		return bluetoothManager;
 	}
 
-	public void sendEvent(String eventName,
-						  @Nullable WritableMap params) {
+	public void sendEvent(String eventName, @Nullable WritableMap params) {
 		getReactApplicationContext()
 				.getJSModule(RCTNativeAppEventEmitter.class)
 				.emit(eventName, params);
