@@ -1,7 +1,7 @@
 declare module "rn-ble-pic" {
   export function setPeripheralName(name?: string): void;
 
-  export function addService(erviceUUID?: string, primary?: boolean): void;
+  export function addService(serviceUUID?: string, primary?: boolean, serviceData?: string): void;
 
   export function addCharacteristicToService(
     serviceUUID?: string,
