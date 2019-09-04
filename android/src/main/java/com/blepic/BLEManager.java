@@ -171,7 +171,7 @@ class BLEManager extends ReactContextBaseJavaModule implements ActivityEventList
         if(!this.servicesMap.containsKey(uuid))
             this.servicesMap.put(uuid, tempService);
 
-        if(!this.servicesDataMap.containsKey(uuid) && serviceData !== null)
+        if(!this.servicesDataMap.containsKey(uuid) && serviceData != null)
             this.servicesDataMap.put(uuid, serviceData);
     }
 
@@ -221,13 +221,13 @@ class BLEManager extends ReactContextBaseJavaModule implements ActivityEventList
 
         AdvertiseData.Builder dataBuilder = new AdvertiseData.Builder()
                 .setIncludeDeviceName(true);
-        for (Map.Entry<String,BluetoothGattService> entry : this.servicesMap.values()) {
+        for (Map.Entry<String,BluetoothGattService> entry : this.servicesMap.entrySet()) {
             BluetoothGattService service = entry.getValue();
             String uuid = entry.getKey();
             dataBuilder.addServiceUuid(new ParcelUuid(service.getUuid()));
 
             String serviceData = this.servicesDataMap.get(uuid);
-            if(serviceData !== null) {
+            if(serviceData != null) {
                 byte[] b = serviceData.getBytes();
                 dataBuilder.addServiceData(new ParcelUuid(service.getUuid()), b);
             }
