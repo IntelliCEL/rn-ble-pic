@@ -10,8 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
-import android.os.ParcelUuid;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 import android.util.Log;
 
 import com.facebook.react.bridge.ActivityEventListener;
@@ -32,24 +31,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.UUID;
 
 import static android.app.Activity.RESULT_OK;
 import static android.bluetooth.BluetoothProfile.GATT;
-import static android.os.Build.VERSION_CODES.LOLLIPOP;
-
-import android.bluetooth.BluetoothGatt;
-import android.bluetooth.BluetoothGattDescriptor;
-import android.bluetooth.BluetoothGattServer;
-import android.bluetooth.BluetoothGattServerCallback;
-import android.bluetooth.BluetoothGattService;
-import android.bluetooth.le.AdvertiseCallback;
-import android.bluetooth.le.AdvertiseData;
-import android.bluetooth.le.AdvertiseSettings;
-import android.bluetooth.le.BluetoothLeAdvertiser;
-
 
 class BLEManager extends ReactContextBaseJavaModule implements ActivityEventListener {
 
@@ -71,80 +55,22 @@ class BLEManager extends ReactContextBaseJavaModule implements ActivityEventList
 	private Context context;
 	private ReactApplicationContext reactContext;
 	private Callback enableBluetoothCallback;
+	private BLEScanner bleScanner;
+    private BLEAdvertiser bleAdvertiser;
 	private BondRequest bondRequest;
 	private BondRequest removeBondRequest;
-	private boolean forceLegacy;
-
-	private String name;
-	HashMap<String, BluetoothGattService> servicesMap;
-    HashMap<String, String> servicesDataMap;
-    HashSet<BluetoothDevice> bluetoothDevices;
-	BluetoothGattServer gattServer;
-    BluetoothLeAdvertiser advertiser;
-    AdvertiseCallback advertisingCallback;
-	boolean advertising;
-
-	private final BluetoothGattServerCallback gattServerCallback = new BluetoothGattServerCallback() {
-        @Override
-        public void onConnectionStateChange(BluetoothDevice device, final int status, int newState) {
-            super.onConnectionStateChange(device, status, newState);
-            if (status == BluetoothGatt.GATT_SUCCESS) {
-                if (newState == BluetoothGatt.STATE_CONNECTED) {
-                    bluetoothDevices.add(device);
-                } else if (newState == BluetoothGatt.STATE_DISCONNECTED) {
-                    bluetoothDevices.remove(device);
-                }
-            } else {
-                bluetoothDevices.remove(device);
-            }
-        }
-
-        @Override
-        public void onCharacteristicReadRequest(BluetoothDevice device, int requestId, int offset, BluetoothGattCharacteristic characteristic) {
-            super.onCharacteristicReadRequest(device, requestId, offset, characteristic);
-            if (offset != 0) {
-                gattServer.sendResponse(device, requestId, BluetoothGatt.GATT_INVALID_OFFSET, offset, null);
-                return;
-            }
-            gattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, offset, characteristic.getValue());
-        }
-
-        @Override
-        public void onNotificationSent(BluetoothDevice device, int status) {
-            super.onNotificationSent(device, status);
-        }
-
-        @Override
-        public void onCharacteristicWriteRequest(BluetoothDevice device, int requestId, BluetoothGattCharacteristic characteristic, boolean preparedWrite, boolean responseNeeded, int offset, byte[] value) {
-            super.onCharacteristicWriteRequest(device, requestId, characteristic, preparedWrite, responseNeeded, offset, value);
-            characteristic.setValue(value);
-            WritableMap map = Arguments.createMap();
-            WritableArray data = Arguments.createArray();
-            for (byte b : value) {
-                data.pushInt((int) b);
-            }
-            map.putArray("data", data);
-            map.putString("device", device.toString());
-            if (responseNeeded) {
-                gattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, offset, value);
-            }
-        }
-    };
+    private final Map<String, Peripheral> peripherals = new LinkedHashMap<>();
 
 	public ReactApplicationContext getReactContext() {
 		return reactContext;
 	}
 
-	public BLEManager(ReactApplicationContext reactContext) {
-		super(reactContext);
-		this.context = reactContext;
-		this.reactContext = reactContext;
+	public BLEManager(ReactApplicationContext pReactContext) {
+		super(pReactContext);
+		context = pReactContext;
+		reactContext = pReactContext;
 		reactContext.addActivityEventListener(this);
-		this.servicesMap = new HashMap<String, BluetoothGattService>();
-        this.servicesDataMap = new HashMap<String, String>();
-		this.advertising = false;
-    	this.name = null;
-		Log.d(LOG_TAG, "BLEManager created");
+		Log.d(LOG_TAG, "BleManager created");
 	}
 
 	@Override
@@ -152,130 +78,10 @@ class BLEManager extends ReactContextBaseJavaModule implements ActivityEventList
 		return "BLEManager";
 	}
 
-	@ReactMethod
-    public void setPeripheralName(String name) {
-        this.name = name;
-    }
-
-	@ReactMethod
-    public void addService(String uuid, Boolean primary, String serviceData) {
-        UUID SERVICE_UUID = UUID.fromString(uuid);
-        int type = primary ? BluetoothGattService.SERVICE_TYPE_PRIMARY : BluetoothGattService.SERVICE_TYPE_SECONDARY;
-        BluetoothGattService tempService = new BluetoothGattService(SERVICE_UUID, type);
-        if(!this.servicesMap.containsKey(uuid))
-            this.servicesMap.put(uuid, tempService);
-
-        if(!this.servicesDataMap.containsKey(uuid) && serviceData != null)
-            this.servicesDataMap.put(uuid, serviceData);
-    }
-
-    @ReactMethod
-    public void addCharacteristicToService(String serviceUUID, String uuid, Integer permissions, Integer properties, String data) {  
-		UUID CHAR_UUID = UUID.fromString(uuid);
-        BluetoothGattCharacteristic tempChar = new BluetoothGattCharacteristic(CHAR_UUID, properties, permissions);
-		
-        if(data != null && data != "") {
-          tempChar.setValue(data);
-        }
-
-        this.servicesMap.get(serviceUUID).addCharacteristic(tempChar);
-    }
-
-	@ReactMethod
-    public void startAdvertising(final Callback callback) {
-		bluetoothManager = getBluetoothManager();
-		bluetoothAdapter = getBluetoothAdapter();
-
-        // Ensures if Bluetooth is available on the device and also it is enabled.
-		if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled()) {
-			Log.d(LOG_TAG, "Bluetooth not supported or not enabled.");
-			callback.invoke("Bluetooth not supported or not enabled.");
-			return;
-		}
-
-		if(this.name != null) {
-        	bluetoothAdapter.setName(this.name);
-		}
-
-        bluetoothDevices = new HashSet<>();
-        gattServer = getBluetoothGattServer();
-        //bluetoothManager.openGattServer(reactContext, gattServerCallback);
-        for (BluetoothGattService service : this.servicesMap.values()) {
-            gattServer.addService(service);
-        }
-        advertiser = bluetoothAdapter.getBluetoothLeAdvertiser();
-        AdvertiseSettings settings = new AdvertiseSettings.Builder()
-                .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
-                .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
-                .setConnectable(true)
-                .build();
-
-        AdvertiseData.Builder dataBuilder = new AdvertiseData.Builder()
-                .setIncludeDeviceName(true);
-        for (Map.Entry<String,BluetoothGattService> entry : this.servicesMap.entrySet()) {
-            BluetoothGattService service = entry.getValue();
-            String uuid = entry.getKey();
-            dataBuilder.addServiceUuid(new ParcelUuid(service.getUuid()));
-
-            String serviceData = this.servicesDataMap.get(uuid);
-            if(serviceData != null) {
-                byte[] b = serviceData.getBytes();
-                dataBuilder.addServiceData(new ParcelUuid(service.getUuid()), b);
-            }
-        }
-        AdvertiseData data = dataBuilder.build();
-        Log.i("RNBLEModule", data.toString());
-
-        advertisingCallback = new AdvertiseCallback() {
-            @Override
-            public void onStartSuccess(AdvertiseSettings settingsInEffect) {
-                super.onStartSuccess(settingsInEffect);
-                advertising = true;
-                callback.invoke();
-            }
-
-            @Override
-            public void onStartFailure(int errorCode) {
-                advertising = false;
-                Log.e("RNBLEModule", "Advertising onStartFailure: " + errorCode);
-				callback.invoke("Advertising onStartFailure: " + errorCode);
-                super.onStartFailure(errorCode);
-            }
-        };
-
-        advertiser.startAdvertising(settings, data, advertisingCallback);
-    }
-
-	@ReactMethod
-    public boolean isAdvertising() {
-        return this.advertising;
-    }
-
-	@ReactMethod
-    public void stopAdvertising() {
-        if (gattServer != null) {
-            gattServer.clearServices();
-            gattServer.close();
-            gattServer = null;
-        }
-		bluetoothAdapter = getBluetoothAdapter();
-        if (bluetoothAdapter !=null && bluetoothAdapter.isEnabled() && advertiser != null) {
-            // Calling stopAdvertising() before calling GATT server's close() method will throw a null pointer exception
-            advertiser.stopAdvertising(advertisingCallback);
-            advertising = false;
-        }
-    }
-
-	private BluetoothGattServer getBluetoothGattServer() {
-		if (gattServer == null) {
-			gattServer = getBluetoothManager().openGattServer(reactContext, gattServerCallback);
-		}
-		return gattServer;
-	}
-
 	private BluetoothAdapter getBluetoothAdapter() {
 		if (bluetoothAdapter == null) {
-			bluetoothAdapter = getBluetoothManager().getAdapter();
+			BluetoothManager manager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
+			bluetoothAdapter = manager.getAdapter();
 		}
 		return bluetoothAdapter;
 	}
@@ -288,9 +94,423 @@ class BLEManager extends ReactContextBaseJavaModule implements ActivityEventList
 	}
 
 	public void sendEvent(String eventName, @Nullable WritableMap params) {
-		getReactApplicationContext()
-				.getJSModule(RCTNativeAppEventEmitter.class)
-				.emit(eventName, params);
+		getReactApplicationContext().getJSModule(RCTNativeAppEventEmitter.class).emit(eventName, params);
+	}
+
+	@ReactMethod
+	public void init(Callback callback) {
+        if (getBluetoothAdapter() == null || !getBluetoothAdapter().isEnabled()) {
+			Log.d(LOG_TAG, "Bluetooth not supported or not enabled.");
+			callback.invoke("Bluetooth not supported or not enabled.");
+			return;
+		}
+
+        bleAdvertiser = new BLEAdvertiser(reactContext, this);
+		bleScanner = new BLEScanner(reactContext, this);
+
+		IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
+		filter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
+		context.registerReceiver(mReceiver, filter);
+		callback.invoke();
+		Log.d(LOG_TAG, "BLEManager initialized");
+	}
+
+	@ReactMethod
+	public void enableBluetooth(Callback callback) {
+		if (getBluetoothAdapter() == null) {
+			Log.d(LOG_TAG, "Bluetooth not supported.");
+			callback.invoke("Bluetooth not supported.");
+			return;
+		}
+		if (!getBluetoothAdapter().isEnabled()) {
+			enableBluetoothCallback = callback;
+			Intent intentEnable = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+			if (getCurrentActivity() == null)
+				callback.invoke("Current activity is not available.");
+			else
+				getCurrentActivity().startActivityForResult(intentEnable, ENABLE_REQUEST);
+		} else
+			callback.invoke();
+	}
+
+    @ReactMethod
+	public void checkState() {
+		BluetoothAdapter adapter = getBluetoothAdapter();
+		String state = "off";
+		if (adapter != null) {
+			switch (adapter.getState()) {
+				case BluetoothAdapter.STATE_ON:
+					state = "on";
+					break;
+				case BluetoothAdapter.STATE_OFF:
+					state = "off";
+			}
+		}
+
+		WritableMap map = Arguments.createMap();
+		map.putString("state", state);
+		Log.d(LOG_TAG, "state:" + state);
+		sendEvent("BLEManagerDidUpdateState", map);
+	}
+
+	private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			final String action = intent.getAction();
+
+			if (action.equals(BluetoothAdapter.ACTION_STATE_CHANGED)) {
+				final int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE,
+						BluetoothAdapter.ERROR);
+				String stringState = "";
+
+				switch (state) {
+					case BluetoothAdapter.STATE_OFF:
+						stringState = "off";
+						clearPeripherals();
+						break;
+					case BluetoothAdapter.STATE_TURNING_OFF:
+						stringState = "turning_off";
+						disconnectPeripherals();
+						break;
+					case BluetoothAdapter.STATE_ON:
+						stringState = "on";
+						break;
+					case BluetoothAdapter.STATE_TURNING_ON:
+						stringState = "turning_on";
+						break;
+				}
+
+				WritableMap map = Arguments.createMap();
+				map.putString("state", stringState);
+				Log.d(LOG_TAG, "state: " + stringState);
+				sendEvent("BLEManagerDidUpdateState", map);
+
+			} else if (action.equals(BluetoothDevice.ACTION_BOND_STATE_CHANGED)) {
+				final int bondState = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.ERROR);
+				final int prevState = intent.getIntExtra(BluetoothDevice.EXTRA_PREVIOUS_BOND_STATE, BluetoothDevice.ERROR);
+				BluetoothDevice device = (BluetoothDevice) intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+
+				String bondStateStr = "UNKNOWN";
+				switch (bondState) {
+					case BluetoothDevice.BOND_BONDED:
+						bondStateStr = "BOND_BONDED";
+						break;
+					case BluetoothDevice.BOND_BONDING:
+						bondStateStr = "BOND_BONDING";
+						break;
+					case BluetoothDevice.BOND_NONE:
+						bondStateStr = "BOND_NONE";
+						break;
+				}
+				Log.d(LOG_TAG, "bond state: " + bondStateStr);
+
+				if (bondRequest != null && bondRequest.uuid.equals(device.getAddress())) {
+					if (bondState == BluetoothDevice.BOND_BONDED) {
+						bondRequest.callback.invoke();
+						bondRequest = null;
+					} else if (bondState == BluetoothDevice.BOND_NONE || bondState == BluetoothDevice.ERROR) {
+						bondRequest.callback.invoke("Bond request has been denied.");
+						bondRequest = null;
+					}
+				}
+				
+				if (bondState == BluetoothDevice.BOND_BONDED) {
+					Peripheral peripheral = new Peripheral(device, reactContext);
+					WritableMap map = peripheral.asWritableMap();
+					sendEvent("BLEManagerPeripheralDidBond", map);
+				}
+
+				if (removeBondRequest != null && removeBondRequest.uuid.equals(device.getAddress()) && bondState == BluetoothDevice.BOND_NONE && prevState == BluetoothDevice.BOND_BONDED) {
+					removeBondRequest.callback.invoke();
+					removeBondRequest = null;
+				}
+			}
+
+		}
+	};
+
+    /** Advertiser Methods Start */
+    @ReactMethod
+    public void setPeripheralName(String name) {
+        bleAdvertiser.setPeripheralName(name);
+    }
+
+    @ReactMethod
+    public void addService(String uuid, Boolean primary, String serviceData) {
+        bleAdvertiser.addService(uuid, primary, serviceData);
+    }
+
+    @ReactMethod
+    public void addCharacteristicToService(String serviceUUID, String characteristicUUID, Integer permissions, Integer properties, String characteristicData) { 
+        bleAdvertiser.addCharacteristicToService(serviceUUID, characteristicUUID, permissions, properties, characteristicData);
+    } 
+	
+    @ReactMethod
+    public void startAdvertising(final Callback callback) {
+        bleAdvertiser.startAdvertising(callback);
+    }
+	
+    @ReactMethod
+    public boolean isAdvertising() {
+        return bleAdvertiser.isAdvertising();
+    }
+    
+    @ReactMethod
+    public void stopAdvertising() {
+        bleAdvertiser.stopAdvertising();
+    }
+
+    /** Advertiser Methods End */
+    
+    /** Scanner Methods Start */
+	@ReactMethod
+	public void scan(ReadableArray serviceUUIDs, final int scanSeconds, ReadableMap options, Callback callback) {
+
+		if (getBluetoothAdapter() == null || !getBluetoothAdapter().isEnabled()) {
+			Log.d(LOG_TAG, "Bluetooth not supported or not enabled.");
+			callback.invoke("Bluetooth not supported or not enabled.");
+			return;
+		}
+
+		synchronized (peripherals) {
+			for (Iterator<Map.Entry<String, Peripheral>> iterator = peripherals.entrySet().iterator(); iterator.hasNext(); ) {
+				Map.Entry<String, Peripheral> entry = iterator.next();
+				if (!entry.getValue().isConnected()) {
+					iterator.remove();
+				}
+			}
+		}
+
+		if (bleScanner != null) bleScanner.scan(serviceUUIDs, scanSeconds, options, callback);
+	}
+
+	@ReactMethod
+	public void stopScan(Callback callback) {
+		if (getBluetoothAdapter() == null || !getBluetoothAdapter().isEnabled()) {
+			Log.d(LOG_TAG, "Bluetooth not supported or not enabled.");
+			callback.invoke("Bluetooth not supported or not enabled.");
+			return;
+		}
+		if (bleScanner != null) {
+			bleScanner.stopScan(callback);
+			WritableMap map = Arguments.createMap();
+			sendEvent("BLEManagerScanStopped", map);
+		}
+	}
+
+	@ReactMethod
+	public void connect(String peripheralUUID, Callback callback) {
+		Log.d(LOG_TAG, "Connecting to peripheral: " + peripheralUUID);
+
+		Peripheral peripheral = retrieveOrCreatePeripheral(peripheralUUID);
+		if (peripheral != null) {
+            peripheral.connect(callback, getCurrentActivity());
+		} else {
+            callback.invoke("Provided peripheral UUID is invalid or peripheral not found.");
+        }
+	}
+
+	@ReactMethod
+	public void disconnect(String peripheralUUID, boolean force, Callback callback) {
+		Log.d(LOG_TAG, "Disconnecting from peripheral: " + peripheralUUID);
+
+		Peripheral peripheral = peripherals.get(peripheralUUID);
+		if (peripheral != null) {
+			peripheral.disconnect(force);
+			callback.invoke();
+		} else {
+			callback.invoke("Provided peripheral UUID is invalid or peripheral not found.");
+        }
+	}
+
+    @ReactMethod
+	public void retrieveServices(String peripheralUUID, ReadableArray services, Callback callback) {
+		Log.d(LOG_TAG, "Retrieving services of peripheral: " + peripheralUUID);
+		
+        Peripheral peripheral = peripherals.get(peripheralUUID);
+		if (peripheral != null) {
+			peripheral.retrieveServices(callback);
+		} else {
+            callback.invoke("Provided peripheral UUID is invalid or peripheral not found.");
+        }
+	}
+
+	@ReactMethod
+	public void startNotification(String peripheralUUID, String serviceUUID, String characteristicUUID, Callback callback) {
+
+		Peripheral peripheral = peripherals.get(peripheralUUID);
+		if (peripheral != null) {
+			peripheral.registerNotify(Helper.uuidFromString(serviceUUID), Helper.uuidFromString(characteristicUUID), callback);
+		} else {
+			callback.invoke("Provided peripheral UUID is invalid or peripheral not found.");
+        }
+	}
+
+	@ReactMethod
+	public void stopNotification(String peripheralUUID, String serviceUUID, String characteristicUUID, Callback callback) {
+
+		Peripheral peripheral = peripherals.get(peripheralUUID);
+		if (peripheral != null) {
+			peripheral.removeNotify(Helper.uuidFromString(serviceUUID), Helper.uuidFromString(characteristicUUID), callback);
+		} else {
+			callback.invoke("Provided peripheral UUID is invalid or peripheral not found.");
+        }
+	}
+
+	@ReactMethod
+	public void write(String peripheralUUID, String serviceUUID, String characteristicUUID, ReadableArray message, Integer maxByteSize, Callback callback) {
+		Log.d(LOG_TAG, "Writing to peripheral: " + peripheralUUID);
+
+		Peripheral peripheral = peripherals.get(peripheralUUID);
+		if (peripheral != null) {
+			byte[] decoded = new byte[message.size()];
+			for (int i = 0; i < message.size(); i++) {
+				decoded[i] = new Integer(message.getInt(i)).byteValue();
+			}
+			Log.d(LOG_TAG, "Message(" + decoded.length + "): " + bytesToHex(decoded));
+			peripheral.write(Helper.uuidFromString(serviceUUID), Helper.uuidFromString(characteristicUUID), decoded, maxByteSize, null, callback, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+		} else {
+            callback.invoke("Provided peripheral UUID is invalid or peripheral not found.");
+        }
+	}
+
+	@ReactMethod
+	public void writeWithoutResponse(String peripheralUUID, String serviceUUID, String characteristicUUID, ReadableArray message, Integer maxByteSize, Integer queueSleepTime, Callback callback) {
+		Log.d(LOG_TAG, "Writing without response to peripheral: " + peripheralUUID);
+
+		Peripheral peripheral = peripherals.get(peripheralUUID);
+		if (peripheral != null) {
+			byte[] decoded = new byte[message.size()];
+			for (int i = 0; i < message.size(); i++) {
+				decoded[i] = new Integer(message.getInt(i)).byteValue();
+			}
+			Log.d(LOG_TAG, "Message(" + decoded.length + "): " + bytesToHex(decoded));
+			peripheral.write(Helper.uuidFromString(serviceUUID), Helper.uuidFromString(characteristicUUID), decoded, maxByteSize, queueSleepTime, callback, BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
+		} else {
+            callback.invoke("Provided peripheral UUID is invalid or peripheral not found.");
+        }
+	}
+
+	@ReactMethod
+	public void read(String peripheralUUID, String serviceUUID, String characteristicUUID, Callback callback) {
+		Log.d(LOG_TAG, "Reading from peripheral: " + peripheralUUID);
+		
+        Peripheral peripheral = peripherals.get(peripheralUUID);
+		if (peripheral != null) {
+			peripheral.read(Helper.uuidFromString(serviceUUID), Helper.uuidFromString(characteristicUUID), callback);
+		} else {
+            callback.invoke("Provided peripheral UUID is invalid or peripheral not found.");
+        }
+	}
+
+    @ReactMethod
+	public void getDiscoveredPeripherals(Callback callback) {
+		WritableArray map = Arguments.createArray();
+		Map<String, Peripheral> peripheralsCopy = new LinkedHashMap<>(peripherals);
+		for (Map.Entry<String, Peripheral> entry : peripheralsCopy.entrySet()) {
+			Peripheral peripheral = entry.getValue();
+			WritableMap jsonBundle = peripheral.asWritableMap();
+			map.pushMap(jsonBundle);
+		}
+		callback.invoke(null, map);
+	}
+
+	@ReactMethod
+	public void getConnectedPeripherals(ReadableArray serviceUUIDs, Callback callback) {
+		WritableArray map = Arguments.createArray();
+
+        if (getBluetoothAdapter() == null || !getBluetoothAdapter().isEnabled()) {
+			Log.d(LOG_TAG, "Bluetooth not supported or not enabled.");
+			callback.invoke("Bluetooth not supported or not enabled.");
+			return;
+		}
+
+		List<BluetoothDevice> periperals = getBluetoothManager().getConnectedDevices(GATT);
+		for (BluetoothDevice entry : periperals) {
+			Peripheral peripheral = savePeripheral(entry);
+			WritableMap jsonBundle = peripheral.asWritableMap();
+			map.pushMap(jsonBundle);
+		}
+		callback.invoke(null, map);
+	}
+
+	@ReactMethod
+	public void removePeripheral(String peripheralUUID, Callback callback) {
+		Log.d(LOG_TAG, "Removing peripheral from list: " + peripheralUUID);
+
+		Peripheral peripheral = peripherals.get(peripheralUUID);
+		if (peripheral != null) {
+			synchronized (peripherals) {
+				if (peripheral.isConnected()) {
+					callback.invoke("Peripheral is connected to some client and cannot be removed while connected.");
+				} else {
+					peripherals.remove(peripheralUUID);
+					callback.invoke();
+				}
+			}
+		} else {
+            callback.invoke("Provided peripheral UUID is invalid or peripheral not found.");
+        }
+	}
+
+	private Peripheral savePeripheral(BluetoothDevice device) {
+		String address = device.getAddress();
+		synchronized (peripherals) {
+			if (!peripherals.containsKey(address)) {
+				Peripheral peripheral = new Peripheral(device, reactContext);
+				peripherals.put(device.getAddress(), peripheral);
+			}
+		}
+		return peripherals.get(address);
+	}
+
+	public Peripheral getPeripheral(BluetoothDevice device) {
+		String address = device.getAddress();
+		return peripherals.get(address);
+	}
+
+	public Peripheral savePeripheral(Peripheral peripheral) {
+		synchronized (peripherals) {
+			peripherals.put(peripheral.getDevice().getAddress(), peripheral);
+		}
+		return peripheral;
+	}
+
+	private void clearPeripherals() {
+		if (!peripherals.isEmpty()) {
+			synchronized (peripherals) {
+				peripherals.clear();
+			}
+		}
+	}
+
+	private void disconnectPeripherals() {
+		if (!peripherals.isEmpty()) {
+			synchronized (peripherals) {
+				for (Peripheral peripheral : peripherals.values()) {
+					if (peripheral.isConnected()) {
+						peripheral.disconnect(false);
+					}
+				}
+			}
+		}
+	}
+
+    private Peripheral retrieveOrCreatePeripheral(String peripheralUUID) {
+		Peripheral peripheral = peripherals.get(peripheralUUID);
+		if (peripheral == null) {
+			synchronized (peripherals) {
+				if (peripheralUUID != null) {
+					peripheralUUID = peripheralUUID.toUpperCase();
+				}
+				if (BluetoothAdapter.checkBluetoothAddress(peripheralUUID)) {
+					BluetoothDevice device = bluetoothAdapter.getRemoteDevice(peripheralUUID);
+					peripheral = new Peripheral(device, reactContext);
+					peripherals.put(peripheralUUID, peripheral);
+				}
+			}
+		}
+		return peripheral;
 	}
 
 	private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
@@ -319,7 +539,7 @@ class BLEManager extends ReactContextBaseJavaModule implements ActivityEventList
 			if (resultCode == RESULT_OK) {
 				enableBluetoothCallback.invoke();
 			} else {
-				enableBluetoothCallback.invoke("User refused to enable");
+				enableBluetoothCallback.invoke("User refused to enable bluetooth.");
 			}
 			enableBluetoothCallback = null;
 		}
@@ -327,6 +547,7 @@ class BLEManager extends ReactContextBaseJavaModule implements ActivityEventList
 
 	@Override
 	public void onNewIntent(Intent intent) {
-
 	}
+
+    /** Scanner Methods End */
 }

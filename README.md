@@ -1,5 +1,11 @@
 # rn-ble-pic
 
+## Pre-requisites
+
+Android API >= 21
+IOS >= 10.0
+ReactNative >= 0.50
+
 ## Getting started
 
 `$ npm install rn-ble-pic --save`
