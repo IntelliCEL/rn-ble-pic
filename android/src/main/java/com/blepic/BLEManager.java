@@ -117,11 +117,11 @@ class BLEManager extends ReactContextBaseJavaModule implements ActivityEventList
 		isInitialized = true;
 
 		callback.invoke();
-		Log.d(LOG_TAG, "BLEManager initialized");
+		Log.d(LOG_TAG, "BLEManager initialized successfully.");
 	}
 
 	@ReactMethod
-	public void hasInitialized() {
+	public boolean hasInitialized() {
         return isInitialized;
 	}
 
