@@ -1,6 +1,8 @@
 declare module "rn-ble-pic" {
   export function init(): Promise<void>;
 
+  export function hasInitialized(): boolean;
+
   // Android only
   export function enableBluetooth(): Promise<void>;
   // [Android only]
@@ -56,7 +58,7 @@ declare module "rn-ble-pic" {
     scanMode?: number;
   }
 
-  export function scan(
+  export function startScan(
     serviceUUIDs: string[],
     seconds: number,
     options?: ScanOptions

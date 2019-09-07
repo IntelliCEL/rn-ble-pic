@@ -96,7 +96,7 @@ public class BLEScanner {
                                     btAdapter.getBluetoothLeScanner().stopScan(mScanCallback);
                                 }
                                 WritableMap map = Arguments.createMap();
-                                bleManager.sendEvent("BLEManagerScanStopped", map);
+                                bleManager.sendEvent("BLEManagerStoppedScan", map);
                             }
                         }
                     });
@@ -128,7 +128,7 @@ public class BLEScanner {
                     bleManager.savePeripheral(peripheral);
 
 					WritableMap map = peripheral.asWritableMap();
-					bleManager.sendEvent("BLEManagerPeripheralDiscovered", map);
+					bleManager.sendEvent("BLEManagerDiscoveredPeripheral", map);
 				}
 			});
 		}
@@ -140,7 +140,7 @@ public class BLEScanner {
 		@Override
 		public void onScanFailed(final int errorCode) {
             WritableMap map = Arguments.createMap();
-            bleManager.sendEvent("BLEManagerScanStopped", map);
+            bleManager.sendEvent("BLEManagerStoppedScan", map);
 		}
 	};
 }

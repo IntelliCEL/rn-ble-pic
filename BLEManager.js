@@ -19,6 +19,10 @@ class BLEManager {
     });
   }
 
+  hasInitialized() {
+    return bleManager.hasInitialized();
+  }
+
   enableBluetooth() {
     return new Promise((fulfill, reject) => {
       bleManager.enableBluetooth(error => {
@@ -85,7 +89,7 @@ class BLEManager {
 
   /** BLE SCANNING SECTION START */
 
-  scan(serviceUUIDs, seconds, scanningOptions = {}) {
+  startScan(serviceUUIDs, seconds, scanningOptions = {}) {
     return new Promise((fulfill, reject) => {
       // (ANDROID) Match as many advertisement per filter as hw could allow
       // dependes on current capability and availability of the resources in hw.
@@ -103,7 +107,7 @@ class BLEManager {
         scanningOptions.scanMode = 0;
       }
 
-      bleManager.scan(serviceUUIDs, seconds, scanningOptions, error => {
+      bleManager.startScan(serviceUUIDs, seconds, scanningOptions, error => {
         if (error) {
           reject(error);
         } else {

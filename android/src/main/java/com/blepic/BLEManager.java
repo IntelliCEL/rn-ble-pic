@@ -60,6 +60,7 @@ class BLEManager extends ReactContextBaseJavaModule implements ActivityEventList
 	private BondRequest bondRequest;
 	private BondRequest removeBondRequest;
     private final Map<String, Peripheral> peripherals = new LinkedHashMap<>();
+	private boolean isInitialized;
 
 	public ReactApplicationContext getReactContext() {
 		return reactContext;
@@ -70,7 +71,8 @@ class BLEManager extends ReactContextBaseJavaModule implements ActivityEventList
 		context = pReactContext;
 		reactContext = pReactContext;
 		reactContext.addActivityEventListener(this);
-		Log.d(LOG_TAG, "BleManager created");
+		isInitialized = false;
+		Log.d(LOG_TAG, "BLEManager created successfully.");
 	}
 
 	@Override
@@ -111,8 +113,16 @@ class BLEManager extends ReactContextBaseJavaModule implements ActivityEventList
 		IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
 		filter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
 		context.registerReceiver(mReceiver, filter);
+
+		isInitialized = true;
+
 		callback.invoke();
 		Log.d(LOG_TAG, "BLEManager initialized");
+	}
+
+	@ReactMethod
+	public void hasInitialized() {
+        return isInitialized;
 	}
 
 	@ReactMethod
@@ -232,39 +242,52 @@ class BLEManager extends ReactContextBaseJavaModule implements ActivityEventList
     /** Advertiser Methods Start */
     @ReactMethod
     public void setPeripheralName(String name) {
-        bleAdvertiser.setPeripheralName(name);
+		if(isInitialized) {
+        	bleAdvertiser.setPeripheralName(name);
+		}
     }
 
     @ReactMethod
     public void addService(String uuid, Boolean primary, String serviceData) {
-        bleAdvertiser.addService(uuid, primary, serviceData);
+        if(isInitialized) {
+        	bleAdvertiser.addService(uuid, primary, serviceData);
+		}
     }
 
     @ReactMethod
     public void addCharacteristicToService(String serviceUUID, String characteristicUUID, Integer permissions, Integer properties, String characteristicData) { 
-        bleAdvertiser.addCharacteristicToService(serviceUUID, characteristicUUID, permissions, properties, characteristicData);
+        if(isInitialized) {
+        	bleAdvertiser.addCharacteristicToService(serviceUUID, characteristicUUID, permissions, properties, characteristicData);
+		}
     } 
 	
     @ReactMethod
     public void startAdvertising(final Callback callback) {
-        bleAdvertiser.startAdvertising(callback);
+        if(isInitialized) {
+        	bleAdvertiser.startAdvertising(callback);
+		}
     }
 	
     @ReactMethod
     public boolean isAdvertising() {
-        return bleAdvertiser.isAdvertising();
+        if(isInitialized) {
+        	return bleAdvertiser.isAdvertising();
+		}
+		return false;
     }
     
     @ReactMethod
     public void stopAdvertising() {
-        bleAdvertiser.stopAdvertising();
+        if(isInitialized) {
+        	bleAdvertiser.stopAdvertising();
+		}
     }
 
     /** Advertiser Methods End */
     
     /** Scanner Methods Start */
 	@ReactMethod
-	public void scan(ReadableArray serviceUUIDs, final int scanSeconds, ReadableMap options, Callback callback) {
+	public void startScan(ReadableArray serviceUUIDs, final int scanSeconds, ReadableMap options, Callback callback) {
 
 		if (getBluetoothAdapter() == null || !getBluetoothAdapter().isEnabled()) {
 			Log.d(LOG_TAG, "Bluetooth not supported or not enabled.");
@@ -294,7 +317,7 @@ class BLEManager extends ReactContextBaseJavaModule implements ActivityEventList
 		if (bleScanner != null) {
 			bleScanner.stopScan(callback);
 			WritableMap map = Arguments.createMap();
-			sendEvent("BLEManagerScanStopped", map);
+			sendEvent("BLEManagerStoppedScan", map);
 		}
 	}
 
