@@ -101,9 +101,10 @@ class BLEManager extends ReactContextBaseJavaModule implements ActivityEventList
 
 	@ReactMethod
 	public void init(Callback callback) {
-        if (getBluetoothAdapter() == null || !getBluetoothAdapter().isEnabled()) {
-			Log.d(LOG_TAG, "Bluetooth not supported or not enabled.");
-			callback.invoke("Bluetooth not supported or not enabled.");
+        
+		if (getBluetoothAdapter() == null) {
+			Log.d(LOG_TAG, "BLEPIC failed to initialize because bluetooth is not supported.");
+			callback.invoke("BLEPIC failed to initialize because bluetooth is not supported.");
 			return;
 		}
 
@@ -116,8 +117,12 @@ class BLEManager extends ReactContextBaseJavaModule implements ActivityEventList
 
 		isInitialized = true;
 
+		if (!getBluetoothAdapter().isEnabled()) {
+			Log.d(LOG_TAG, "BLEPIC initialized but bluetooth is not enabled.");
+		} else  {
+			Log.d(LOG_TAG, "BLEPIC initialized successfully.");
+		}
 		callback.invoke();
-		Log.d(LOG_TAG, "BLEManager initialized successfully.");
 	}
 
 	@ReactMethod
