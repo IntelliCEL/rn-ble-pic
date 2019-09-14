@@ -5,6 +5,7 @@ var bleManager = React.NativeModules.BLEManager;
 class BLEManager {
   constructor() {
     this.isPeripheralConnected = this.isPeripheralConnected.bind(this);
+    this.isInitialized = false;
   }
 
   init() {
@@ -13,6 +14,7 @@ class BLEManager {
         if (error) {
           reject(error);
         } else {
+          this.isInitialized = true;
           fulfill();
         }
       });
@@ -20,7 +22,7 @@ class BLEManager {
   }
 
   hasInitialized() {
-    return bleManager.hasInitialized();
+    return this.isInitialized;
   }
 
   enableBluetooth() {
