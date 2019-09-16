@@ -150,6 +150,20 @@ class BLEAdvertiser {
         }
 
         this.servicesMap.get(serviceUUID).addCharacteristic(tempChar);
+
+        if(this.servicesMap.get(serviceUUID).getCharacteristic(CHAR_UUID)) {
+            if(data != null && data != "") {
+                this.servicesMap.get(serviceUUID).getCharacteristic(CHAR_UUID).setValue(data);
+            }
+        } else {
+            BluetoothGattCharacteristic tempChar = new BluetoothGattCharacteristic(CHAR_UUID, properties, permissions);
+		
+            if(data != null && data != "") {
+                tempChar.setValue(data);
+            }
+
+            this.servicesMap.get(serviceUUID).addCharacteristic(tempChar);
+        }
     }
 
     public void startAdvertising(final Callback callback) {
@@ -168,8 +182,8 @@ class BLEAdvertiser {
 		}
 
         bluetoothDevices = new HashSet<>();
-        gattServer = getBluetoothGattServer();
-        //bluetoothManager.openGattServer(reactContext, gattServerCallback);
+        // gattServer = getBluetoothGattServer();
+        gattServer = bluetoothManager.openGattServer(reactContext, gattServerCallback);
         for (BluetoothGattService service : this.servicesMap.values()) {
             gattServer.addService(service);
         }
@@ -222,13 +236,11 @@ class BLEAdvertiser {
 
     public void stopAdvertising() {
         if (gattServer != null) {
-            gattServer.clearServices();
             gattServer.close();
-            gattServer = null;
         }
 		bluetoothAdapter = getBluetoothAdapter();
         if (bluetoothAdapter !=null && bluetoothAdapter.isEnabled() && advertiser != null) {
-            // Calling stopAdvertising() before calling GATT server's close() method will throw a null pointer exception
+            // GATT server must be closed befor stoping advertising
             advertiser.stopAdvertising(advertisingCallback);
             advertising = false;
         }
