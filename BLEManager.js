@@ -47,8 +47,8 @@ class BLEManager {
     return bleManager.setPeripheralName(name);
   }
 
-  addService(serviceUUID, primary, serviceData = null) {
-    return bleManager.addService(serviceUUID, primary, serviceData);
+  addService(serviceUUID, primary) {
+    return bleManager.addService(serviceUUID, primary);
   }
 
   addCharacteristicToService(
