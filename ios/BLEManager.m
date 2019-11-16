@@ -15,7 +15,7 @@ RCT_EXTERN_METHOD(
     rejecter: (RCTPromiseRejectBlock)reject
 )
 RCT_EXTERN_METHOD(
-    setName: (NSString *)string
+    setPeripheralName: (NSString *)string
 )
 RCT_EXTERN_METHOD(
     addService: (NSString *)uuid

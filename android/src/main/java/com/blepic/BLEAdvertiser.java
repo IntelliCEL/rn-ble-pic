@@ -141,18 +141,18 @@ class BLEAdvertiser {
             this.servicesDataMap.put(uuid, serviceData);
     }
 
-    public void addCharacteristicToService(String serviceUUID, String uuid, Integer permissions, Integer properties, String data) {  
-		UUID CHAR_UUID = UUID.fromString(uuid);
+    public void addCharacteristicToService(String serviceUUID, String characteristicUUID, Integer permissions, Integer properties, String characteristicData) {  
+		UUID CHAR_UUID = UUID.fromString(characteristicUUID);
 
         if(this.servicesMap.get(serviceUUID).getCharacteristic(CHAR_UUID) != null) {
-            if(data != null && data != "") {
-                this.servicesMap.get(serviceUUID).getCharacteristic(CHAR_UUID).setValue(data);
+            if(characteristicData != null && characteristicData != "") {
+                this.servicesMap.get(serviceUUID).getCharacteristic(CHAR_UUID).setValue(characteristicData);
             }
         } else {
             BluetoothGattCharacteristic tempChar = new BluetoothGattCharacteristic(CHAR_UUID, properties, permissions);
 		
-            if(data != null && data != "") {
-                tempChar.setValue(data);
+            if(characteristicData != null && characteristicData != "") {
+                tempChar.setValue(characteristicData);
             }
 
             this.servicesMap.get(serviceUUID).addCharacteristic(tempChar);
