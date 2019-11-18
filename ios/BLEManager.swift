@@ -16,12 +16,9 @@ class BLEManager: RCTEventEmitter {
     var hasListeners: Bool = false
     var isInitialized: Bool = false
     var LOG_TAG: String = "BLE_PIC"
-    var manager: CBPeripheralManager!
-    var startCallback: RCTResponseSenderBlock?
     
     override init() {
         super.init()
-//        manager = CBPeripheralManager(delegate: CBPeripheralManager(), queue: nil, options: nil)
     }
     
     @objc override func supportedEvents() -> [String]! { return ["onWarning"] }
@@ -31,12 +28,6 @@ class BLEManager: RCTEventEmitter {
     
     // Recat Methods
     @objc func `init`(_ callback : @escaping RCTResponseSenderBlock) {
-//        if (manager == nil) {
-//            printJS("BLEPIC failed to initialize because bluetooth is not supported.");
-//			callback(["BLEPIC failed to initialize because bluetooth is not supported."])
-//            return;
-//        }
-        
         bleAdvertiser = BLEAdvertiser(pBleManager: self);
 		self.isInitialized = true;
 		callback([NSNull()])

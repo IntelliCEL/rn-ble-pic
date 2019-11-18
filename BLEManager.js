@@ -8,6 +8,7 @@ class BLEManager {
     this.isInitialized = false;
   }
 
+  //////
   init() {
     return new Promise((fulfill, reject) => {
       bleManager.init(error => {
@@ -91,8 +92,12 @@ class BLEManager {
 
   /** BLE SCANNING SECTION START */
 
-  startScan(serviceUUIDs, seconds, scanningOptions = {}) {
+  startScan(serviceUUIDs, seconds, allowDuplicates, scanningOptions = {}) {
     return new Promise((fulfill, reject) => {
+      if (allowDuplicates == null) {
+        allowDuplicates = false;
+      }
+
       // (ANDROID) Match as many advertisement per filter as hw could allow
       // dependes on current capability and availability of the resources in hw.
       if (scanningOptions.numberOfMatches == null) {
@@ -109,13 +114,19 @@ class BLEManager {
         scanningOptions.scanMode = 0;
       }
 
-      bleManager.startScan(serviceUUIDs, seconds, scanningOptions, error => {
-        if (error) {
-          reject(error);
-        } else {
-          fulfill();
+      bleManager.startScan(
+        serviceUUIDs,
+        seconds,
+        allowDuplicates,
+        scanningOptions,
+        error => {
+          if (error) {
+            reject(error);
+          } else {
+            fulfill();
+          }
         }
-      });
+      );
     });
   }
 

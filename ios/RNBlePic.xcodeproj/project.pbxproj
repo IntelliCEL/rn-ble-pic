@@ -7,9 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		68381B1C237ED2CF00225805 /* BLEManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68381B19237ED2CF00225805 /* BLEManager.swift */; };
 		68381B1D237ED2CF00225805 /* BLEManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 68381B1B237ED2CF00225805 /* BLEManager.m */; };
 		68BD247A237FF054003BEBD0 /* BLEAdvertiser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68BD2479237FF054003BEBD0 /* BLEAdvertiser.swift */; };
+		68BD248A2380124C003BEBD0 /* NSData+Conversion.m in Sources */ = {isa = PBXBuildFile; fileRef = 68BD24892380124C003BEBD0 /* NSData+Conversion.m */; };
+		68BD248D2380135F003BEBD0 /* CBPeripheral+Extensions.m in Sources */ = {isa = PBXBuildFile; fileRef = 68BD248C2380135F003BEBD0 /* CBPeripheral+Extensions.m */; };
+		68BD2490238013BB003BEBD0 /* BLECommandContext.m in Sources */ = {isa = PBXBuildFile; fileRef = 68BD248F238013BB003BEBD0 /* BLECommandContext.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -27,9 +29,15 @@
 /* Begin PBXFileReference section */
 		134814201AA4EA6300B7C361 /* libRNBlePic.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libRNBlePic.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		68381B18237ED2CE00225805 /* RNBlePic-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "RNBlePic-Bridging-Header.h"; sourceTree = "<group>"; };
-		68381B19237ED2CF00225805 /* BLEManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BLEManager.swift; sourceTree = "<group>"; };
 		68381B1B237ED2CF00225805 /* BLEManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLEManager.m; sourceTree = "<group>"; };
 		68BD2479237FF054003BEBD0 /* BLEAdvertiser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEAdvertiser.swift; sourceTree = "<group>"; };
+		68BD248823801214003BEBD0 /* NSData+Conversion.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSData+Conversion.h"; sourceTree = "<group>"; };
+		68BD24892380124C003BEBD0 /* NSData+Conversion.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSData+Conversion.m"; sourceTree = "<group>"; };
+		68BD248B2380128D003BEBD0 /* CBPeripheral+Extensions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "CBPeripheral+Extensions.h"; sourceTree = "<group>"; };
+		68BD248C2380135F003BEBD0 /* CBPeripheral+Extensions.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "CBPeripheral+Extensions.m"; sourceTree = "<group>"; };
+		68BD248E238013A1003BEBD0 /* BLECommandContext.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BLECommandContext.h; sourceTree = "<group>"; };
+		68BD248F238013BB003BEBD0 /* BLECommandContext.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = BLECommandContext.m; sourceTree = "<group>"; };
+		68BD2491238015EB003BEBD0 /* BLEManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BLEManager.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -54,9 +62,15 @@
 		58B511D21A9E6C8500147676 = {
 			isa = PBXGroup;
 			children = (
+				68BD2491238015EB003BEBD0 /* BLEManager.h */,
+				68BD248F238013BB003BEBD0 /* BLECommandContext.m */,
+				68BD248E238013A1003BEBD0 /* BLECommandContext.h */,
+				68BD248C2380135F003BEBD0 /* CBPeripheral+Extensions.m */,
+				68BD248B2380128D003BEBD0 /* CBPeripheral+Extensions.h */,
+				68BD24892380124C003BEBD0 /* NSData+Conversion.m */,
+				68BD248823801214003BEBD0 /* NSData+Conversion.h */,
 				68BD2479237FF054003BEBD0 /* BLEAdvertiser.swift */,
 				68381B1B237ED2CF00225805 /* BLEManager.m */,
-				68381B19237ED2CF00225805 /* BLEManager.swift */,
 				134814211AA4EA7D00B7C361 /* Products */,
 				68381B18237ED2CE00225805 /* RNBlePic-Bridging-Header.h */,
 			);
@@ -120,9 +134,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				68381B1C237ED2CF00225805 /* BLEManager.swift in Sources */,
 				68381B1D237ED2CF00225805 /* BLEManager.m in Sources */,
+				68BD248A2380124C003BEBD0 /* NSData+Conversion.m in Sources */,
+				68BD248D2380135F003BEBD0 /* CBPeripheral+Extensions.m in Sources */,
 				68BD247A237FF054003BEBD0 /* BLEAdvertiser.swift in Sources */,
+				68BD2490238013BB003BEBD0 /* BLECommandContext.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -214,6 +230,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
+				DEFINES_MODULE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
@@ -235,6 +252,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
+				DEFINES_MODULE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,

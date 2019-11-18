@@ -9,7 +9,7 @@
 import Foundation
 import CoreBluetooth
 
-class BLEAdvertiser: NSObject, CBPeripheralManagerDelegate {
+@objc public class BLEAdvertiser: NSObject, CBPeripheralManagerDelegate {
     
     var peripheralName: String?
     var servicesMap = Dictionary<String, CBMutableService>()
@@ -20,19 +20,24 @@ class BLEAdvertiser: NSObject, CBPeripheralManagerDelegate {
     var hasListeners: Bool = false
     var startCallback: RCTResponseSenderBlock?
     
-    init(pBleManager: BLEManager) {
+    @objc override init() {
         super.init()
+    }
+    
+//    @objc(initialize:)
+    @objc func initialize(_ pBleManager: BLEManager) {
         bleManager = pBleManager;
         manager = CBPeripheralManager(delegate: self, queue: nil, options: nil)
         advertising = false
         peripheralName = nil
     }
     
-    func setPeripheralName(name: String) {
+    @objc func setPeripheralName(_ name: String) {
         self.peripheralName = name
     }
     
-    func addService(uuid: String, primary: Bool) {
+    @objc(addService:primary:)
+    func addService(_ uuid: String, primary: Bool) {
         let serviceUUID = CBUUID(string: uuid)
         let service = CBMutableService(type: serviceUUID, primary: primary)
         if(servicesMap.keys.contains(uuid) != true){
@@ -40,7 +45,8 @@ class BLEAdvertiser: NSObject, CBPeripheralManagerDelegate {
         }
     }
     
-    func addCharacteristicToService(serviceUUID: String, characteristicUUID: String, permissions: UInt, properties: UInt, characteristicData: String) {
+    @objc(addCharacteristicToService:characteristicUUID:permissions:properties:characteristicData:)
+    func addCharacteristicToService(_ serviceUUID: String, characteristicUUID: String, permissions: UInt, properties: UInt, characteristicData: String) {
         let characteristicUUID = CBUUID(string: characteristicUUID)
         let propertyValue = CBCharacteristicProperties(rawValue: properties)
         let permissionValue = CBAttributePermissions(rawValue: permissions)
@@ -55,7 +61,7 @@ class BLEAdvertiser: NSObject, CBPeripheralManagerDelegate {
         }
     }
     
-    func startAdvertising(callback : @escaping RCTResponseSenderBlock) {
+    @objc func startAdvertising(_ callback : @escaping RCTResponseSenderBlock) {
         if (manager.state != .poweredOn) {
             bleManager.printJS("Bluetooth not supported or not enabled.");
             callback(["Bluetooth not supported or not enabled."])
@@ -81,11 +87,11 @@ class BLEAdvertiser: NSObject, CBPeripheralManagerDelegate {
         manager.startAdvertising(advertisementData)
     }
     
-    func isAdvertising() -> Bool {
+    @objc func isAdvertising() -> Bool {
         return advertising
     }
     
-    func stopAdvertising() {
+    @objc func stopAdvertising() {
         manager.stopAdvertising()
         advertising = false
     }
@@ -123,19 +129,19 @@ class BLEAdvertiser: NSObject, CBPeripheralManagerDelegate {
     }
 
     // Respond to Subscription to Notification events
-    func peripheralManager(_ peripheral: CBPeripheralManager, central: CBCentral, didSubscribeTo characteristic: CBCharacteristic) {
+    public func peripheralManager(_ peripheral: CBPeripheralManager, central: CBCentral, didSubscribeTo characteristic: CBCharacteristic) {
         let char = characteristic as! CBMutableCharacteristic
         bleManager.printJS("subscribed centrals: \(String(describing: char.subscribedCentrals))")
     }
 
     // Respond to Unsubscribe events
-    func peripheralManager(_ peripheral: CBPeripheralManager, central: CBCentral, didUnsubscribeFrom characteristic: CBCharacteristic) {
+    public func peripheralManager(_ peripheral: CBPeripheralManager, central: CBCentral, didUnsubscribeFrom characteristic: CBCharacteristic) {
         let char = characteristic as! CBMutableCharacteristic
         bleManager.printJS("unsubscribed centrals: \(String(describing: char.subscribedCentrals))")
     }
 
     // Service added
-    func peripheralManager(_ peripheral: CBPeripheralManager, didAdd service: CBService, error: Error?) {
+    public func peripheralManager(_ peripheral: CBPeripheralManager, didAdd service: CBService, error: Error?) {
         if let error = error {
             bleManager.printJS("error: \(error)")
             return
@@ -144,7 +150,7 @@ class BLEAdvertiser: NSObject, CBPeripheralManagerDelegate {
     }
 
     // Bluetooth status changed
-    func peripheralManagerDidUpdateState(_ peripheral: CBPeripheralManager) {
+    public func peripheralManagerDidUpdateState(_ peripheral: CBPeripheralManager) {
         var state: Any
         if #available(iOS 10.0, *) {
             state = peripheral.state.description
@@ -155,7 +161,7 @@ class BLEAdvertiser: NSObject, CBPeripheralManagerDelegate {
     }
 
     // Advertising started
-    func peripheralManagerDidStartAdvertising(_ peripheral: CBPeripheralManager, error: Error?) {
+    public func peripheralManagerDidStartAdvertising(_ peripheral: CBPeripheralManager, error: Error?) {
         if let error = error {
             advertising = false
             bleManager.printJS("Advertising onStartFailure: \(error)")
