@@ -38,6 +38,7 @@ NSString *LOG_TAG;
         notificationCallbacks = [NSMutableDictionary new];
         stopNotificationCallbacks = [NSMutableDictionary new];
         _instance = self;
+        hasListeners = YES;
         isInitialized = false;
         
         LOG_TAG = @"BLE_PIC";
@@ -286,7 +287,7 @@ RCT_EXPORT_METHOD(getConnectedPeripherals:(NSArray *)serviceUUIDStrings callback
 
 RCT_EXPORT_METHOD(start:(NSDictionary *)options callback:(nonnull RCTResponseSenderBlock)callback)
 {
-    NSLog(@"BleManager initialized");
+    NSLog(@"BLEManager initialized");
     NSMutableDictionary *initOptions = [[NSMutableDictionary alloc] init];
     
     if ([[options allKeys] containsObject:@"showAlert"]){
@@ -321,7 +322,7 @@ RCT_EXPORT_METHOD(start:(NSDictionary *)options callback:(nonnull RCTResponseSen
     callback(@[]);
 }
 
-RCT_EXPORT_METHOD(scan:(NSArray *)serviceUUIDStrings timeoutSeconds:(nonnull NSNumber *)timeoutSeconds allowDuplicates:(BOOL)allowDuplicates options:(nonnull NSDictionary*)scanningOptions callback:(nonnull RCTResponseSenderBlock)callback)
+RCT_EXPORT_METHOD(startScan:(NSArray *)serviceUUIDStrings timeoutSeconds:(nonnull NSNumber *)timeoutSeconds allowDuplicates:(BOOL)allowDuplicates options:(nonnull NSDictionary*)scanningOptions callback:(nonnull RCTResponseSenderBlock)callback)
 {
     NSLog(@"scan with timeout %@", timeoutSeconds);
     
@@ -1028,6 +1029,14 @@ RCT_EXPORT_METHOD(
     init:
     (nonnull RCTResponseSenderBlock)callback
 ) {
+    NSLog(@"BLEManager initialized");
+    NSMutableDictionary *initOptions = [[NSMutableDictionary alloc] init];
+    
+    dispatch_queue_t queue;
+    queue = dispatch_get_main_queue();
+    manager = [[CBCentralManager alloc] initWithDelegate:self queue:queue options:initOptions];
+        _sharedManager = manager;
+
     bleAdvertiser = [BLEAdvertiser new];
     [bleAdvertiser initialize:_instance];
     isInitialized = true;

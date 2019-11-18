@@ -253,9 +253,9 @@ class BLEManager extends ReactContextBaseJavaModule implements ActivityEventList
     }
 
     @ReactMethod
-    public void addService(String uuid, Boolean primary, String serviceData) {
+    public void addService(String uuid, Boolean primary) {
         if(isInitialized) {
-        	bleAdvertiser.addService(uuid, primary, serviceData);
+        	bleAdvertiser.addService(uuid, primary);
 		}
     }
 
@@ -292,7 +292,7 @@ class BLEManager extends ReactContextBaseJavaModule implements ActivityEventList
     
     /** Scanner Methods Start */
 	@ReactMethod
-	public void startScan(ReadableArray serviceUUIDs, final int scanSeconds, ReadableMap options, Callback callback) {
+	public void startScan(ReadableArray serviceUUIDs, final int scanSeconds, boolean allowDuplicates, ReadableMap options, Callback callback) {
 
 		if (getBluetoothAdapter() == null || !getBluetoothAdapter().isEnabled()) {
 			Log.d(LOG_TAG, "Bluetooth not supported or not enabled.");

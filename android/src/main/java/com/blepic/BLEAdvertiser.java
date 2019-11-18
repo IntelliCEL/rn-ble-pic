@@ -62,7 +62,6 @@ class BLEAdvertiser {
 
 	private String peripheralName;
 	private HashMap<String, BluetoothGattService> servicesMap;
-    private HashMap<String, String> servicesDataMap;
     private HashSet<BluetoothDevice> bluetoothDevices;
 	private BluetoothGattServer gattServer;
     private BluetoothLeAdvertiser advertiser;
@@ -121,7 +120,6 @@ class BLEAdvertiser {
 		reactContext = pReactContext;
 		bleManager = pBleManager;
 		servicesMap = new HashMap<String, BluetoothGattService>();
-        servicesDataMap = new HashMap<String, String>();
 		advertising = false;
     	peripheralName = null;
 	}
@@ -130,15 +128,12 @@ class BLEAdvertiser {
         peripheralName = name;
     }
 
-    public void addService(String uuid, Boolean primary, String serviceData) {
+    public void addService(String uuid, Boolean primary) {
         UUID SERVICE_UUID = UUID.fromString(uuid);
         int type = primary ? BluetoothGattService.SERVICE_TYPE_PRIMARY : BluetoothGattService.SERVICE_TYPE_SECONDARY;
         BluetoothGattService tempService = new BluetoothGattService(SERVICE_UUID, type);
         if(!this.servicesMap.containsKey(uuid))
             this.servicesMap.put(uuid, tempService);
-
-        if(!this.servicesDataMap.containsKey(uuid) && serviceData != null)
-            this.servicesDataMap.put(uuid, serviceData);
     }
 
     public void addCharacteristicToService(String serviceUUID, String characteristicUUID, Integer permissions, Integer properties, String characteristicData) {  
@@ -193,12 +188,6 @@ class BLEAdvertiser {
             BluetoothGattService service = entry.getValue();
             String uuid = entry.getKey();
             dataBuilder.addServiceUuid(new ParcelUuid(service.getUuid()));
-
-            String serviceData = this.servicesDataMap.get(uuid);
-            if(serviceData != null) {
-                byte[] b = serviceData.getBytes();
-                dataBuilder.addServiceData(new ParcelUuid(service.getUuid()), b);
-            }
         }
         AdvertiseData data = dataBuilder.build();
         Log.i("RNBLEModule", data.toString());
