@@ -83,7 +83,7 @@ NSString *LOG_TAG;
 
 - (NSArray<NSString *> *)supportedEvents
 {
-    return @[@"BleManagerDidUpdateValueForCharacteristic", @"BleManagerStopScan", @"BleManagerDiscoverPeripheral", @"BleManagerConnectPeripheral", @"BleManagerDisconnectPeripheral", @"BleManagerDidUpdateState"];
+    return @[@"BLEManagerDidUpdateValueForCharacteristic", @"BLEManagerStoppedScan", @"BLEManagerDiscoveredPeripheral", @"BLEManagerConnectPeripheral", @"BLEManagerDisconnectPeripheral", @"BLEManagerDidUpdateState"];
 }
 
 
@@ -106,7 +106,7 @@ NSString *LOG_TAG;
         [readCallbacks removeObjectForKey:key];
     } else {
         if (hasListeners) {
-            [self sendEventWithName:@"BleManagerDidUpdateValueForCharacteristic" body:@{@"peripheral": peripheral.uuidAsString, @"characteristic":characteristic.UUID.UUIDString, @"service":characteristic.service.UUID.UUIDString, @"value": ([characteristic.value length] > 0) ? [characteristic.value toArray] : [NSNull null]}];
+            [self sendEventWithName:@"BLEManagerDidUpdateValueForCharacteristic" body:@{@"peripheral": peripheral.uuidAsString, @"characteristic":characteristic.UUID.UUIDString, @"service":characteristic.service.UUID.UUIDString, @"value": ([characteristic.value length] > 0) ? [characteristic.value toArray] : [NSNull null]}];
         }
     }
 }
@@ -368,7 +368,7 @@ RCT_EXPORT_METHOD(stopScan:(nonnull RCTResponseSenderBlock)callback)
     }
     [manager stopScan];
     if (hasListeners) {
-        [self sendEventWithName:@"BleManagerStopScan" body:@{}];
+        [self sendEventWithName:@"BLEManagerStoppedScan" body:@{}];
     }
     callback(@[[NSNull null]]);
 }
@@ -380,7 +380,7 @@ RCT_EXPORT_METHOD(stopScan:(nonnull RCTResponseSenderBlock)callback)
     [manager stopScan];
     if (hasListeners) {
         if (self.bridge) {
-            [self sendEventWithName:@"BleManagerStopScan" body:@{}];
+            [self sendEventWithName:@"BLEManagerStoppedScan" body:@{}];
         }
     }
 }
@@ -396,7 +396,7 @@ RCT_EXPORT_METHOD(stopScan:(nonnull RCTResponseSenderBlock)callback)
         
     NSLog(@"Discover peripheral: %@", [peripheral name]);
     if (hasListeners) {
-        [self sendEventWithName:@"BleManagerDiscoverPeripheral" body:[peripheral asDictionary]];
+        [self sendEventWithName:@"BLEManagerDiscoveredPeripheral" body:[peripheral asDictionary]];
     }
 }
 
@@ -774,7 +774,7 @@ RCT_EXPORT_METHOD(requestMTU:(NSString *)deviceUUID mtu:(NSInteger)mtu callback:
         }
 
         if (hasListeners) {
-            [self sendEventWithName:@"BleManagerConnectPeripheral" body:@{@"peripheral": [peripheral uuidAsString]}];
+            [self sendEventWithName:@"BLEManagerConnectPeripheral" body:@{@"peripheral": [peripheral uuidAsString]}];
         }
     });
 
@@ -855,7 +855,7 @@ RCT_EXPORT_METHOD(requestMTU:(NSString *)deviceUUID mtu:(NSInteger)mtu callback:
     }
 
     if (hasListeners) {
-        [self sendEventWithName:@"BleManagerDisconnectPeripheral" body:@{@"peripheral": [peripheral uuidAsString]}];
+        [self sendEventWithName:@"BLEManagerDisconnectPeripheral" body:@{@"peripheral": [peripheral uuidAsString]}];
     }
 }
 
@@ -931,7 +931,7 @@ RCT_EXPORT_METHOD(requestMTU:(NSString *)deviceUUID mtu:(NSInteger)mtu callback:
 {
     NSString *stateName = [self centralManagerStateToString:central.state];
     if (hasListeners) {
-        [self sendEventWithName:@"BleManagerDidUpdateState" body:@{@"state":stateName}];
+        [self sendEventWithName:@"BLEManagerDidUpdateState" body:@{@"state":stateName}];
     }
 }
 
@@ -1072,12 +1072,10 @@ RCT_EXPORT_METHOD(
     }
 }
 
-RCT_EXPORT_METHOD(
-    isAdvertising:
-    (RCTPromiseResolveBlock)resolve
-    rejecter: (RCTPromiseRejectBlock)reject
-) {}
-
-RCT_EXPORT_METHOD(stopAdvertising) {}
+RCT_EXPORT_METHOD(stopAdvertising) {
+    if(isInitialized) {
+        [bleAdvertiser stopAdvertising];
+    }
+}
 
 @end

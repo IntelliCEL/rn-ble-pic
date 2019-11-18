@@ -92,8 +92,10 @@ import CoreBluetooth
     }
     
     @objc func stopAdvertising() {
+        manager.removeAllServices()
         manager.stopAdvertising()
         advertising = false
+        bleManager.printJS("Advertisement Stopped");
     }
     
     //// EVENTS
