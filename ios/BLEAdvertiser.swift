@@ -167,12 +167,19 @@ import CoreBluetooth
         if let error = error {
             advertising = false
             bleManager.printJS("Advertising onStartFailure: \(error)")
-            startCallback!(["Advertising onStartFailure: \(error)"])
+            if(startCallback != nil) {
+                startCallback!(["Advertising onStartFailure: \(error)"])
+                startCallback = nil;
+            }
             return
         }
         bleManager.printJS("Advert Started")
         advertising = true
-        startCallback!([NSNull()])
+        if(startCallback != nil) {
+            startCallback!([NSNull()])
+            startCallback = nil;
+        }
+        
     }
     
     //// HELPERS
