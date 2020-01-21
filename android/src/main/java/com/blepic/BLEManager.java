@@ -168,6 +168,17 @@ class BLEManager extends ReactContextBaseJavaModule implements ActivityEventList
 		sendEvent("BLEManagerDidUpdateState", map);
 	}
 
+	@ReactMethod
+	public void requestMTU(String deviceUUID, int mtu, Callback callback) {
+		Log.d(LOG_TAG, "Request MTU of " + mtu + " bytes from: " + deviceUUID);
+		Peripheral peripheral = peripherals.get(deviceUUID);
+		if (peripheral != null) {
+			peripheral.requestMTU(mtu, callback);
+		} else {
+			callback.invoke("Peripheral not found", null);
+		}
+	}
+
 	private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {

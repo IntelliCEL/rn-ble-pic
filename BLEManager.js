@@ -346,6 +346,18 @@ class BLEManager {
     });
   }
 
+  requestMTU(peripheralId, mtu) {
+    return new Promise((fulfill, reject) => {
+      bleManager.requestMTU(peripheralId, mtu, (error, mtu) => {
+        if (error) {
+          reject(error);
+        } else {
+          fulfill(mtu);
+        }
+      });
+    });
+  }
+
   /** BLE SCANNING SECTION END */
 }
 

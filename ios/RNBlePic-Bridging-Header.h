@@ -3,6 +3,8 @@
 //
 
 #import "React/RCTBridgeModule.h"
+#import "React/RCTBridge.h"
+#import "React/RCTConvert.h"
 #import "React/RCTEventDispatcher.h"
 #import "React/RCTEventEmitter.h"
 #import "BLEManager.h"

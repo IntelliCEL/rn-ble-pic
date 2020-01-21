@@ -42,4 +42,6 @@
 
 -(void) printJS:(NSString*)message;
 
+-(void) sendJSEvent:(NSString*)enventName message:(NSDictionary<NSString*, NSObject*>*)message;
+
 @end

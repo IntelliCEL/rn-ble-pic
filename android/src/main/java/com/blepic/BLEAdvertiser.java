@@ -109,6 +109,8 @@ class BLEAdvertiser {
             }
             map.putArray("data", data);
             map.putString("device", device.toString());
+
+            bleManager.sendEvent("BLEManagerDidRecieveData", map);
             if (responseNeeded) {
                 gattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, offset, value);
             }

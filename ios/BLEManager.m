@@ -1,3 +1,11 @@
+//
+//  BLEManager.m
+//  RNBlePic
+//
+//  Created by MAZ on 16/11/2019.
+//  Copyright © 2019 Facebook. All rights reserved.
+//
+
 #import "BLEManager.h"
 #import "RNBlePic-Swift.h"
 //#import <RNBlePic/RNBlePic-Swift.h>
@@ -84,7 +92,7 @@ NSString *LOG_TAG;
 
 - (NSArray<NSString *> *)supportedEvents
 {
-    return @[@"BLEManagerDidUpdateValueForCharacteristic", @"BLEManagerStoppedScan", @"BLEManagerDiscoveredPeripheral", @"BLEManagerConnectPeripheral", @"BLEManagerDisconnectPeripheral", @"BLEManagerDidUpdateState"];
+    return @[@"BLEManagerDidUpdateValueForCharacteristic", @"BLEManagerStoppedScan", @"BLEManagerDiscoveredPeripheral", @"BLEManagerConnectPeripheral", @"BLEManagerDisconnectPeripheral", @"BLEManagerDidUpdateState", @"BLEManagerDidRecieveData"];
 }
 
 
@@ -1020,9 +1028,16 @@ RCT_EXPORT_METHOD(requestMTU:(NSString *)deviceUUID mtu:(NSInteger)mtu callback:
 {
     NSString *str = [NSString stringWithFormat: @"%@ %@", LOG_TAG, message];
     NSLog(str);
+//    RCTLogInfo(@"IOS MSG: (%lu): %@ ", LOG_TAG, message);
 //    if(hasListeners) {
 //        sendEvent(withName: "onWarning", body: message)
 //    }
+}
+
+-(void) sendJSEvent:(NSString*)enventName message:(NSDictionary<NSString*, NSObject*>*)message
+{
+    [self printJS:@"sending event"];
+    [self sendEventWithName:enventName body:message];
 }
 
 RCT_EXPORT_METHOD(

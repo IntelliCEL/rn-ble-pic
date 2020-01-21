@@ -48,10 +48,16 @@ import CoreBluetooth
     @objc(addCharacteristicToService:characteristicUUID:permissions:properties:characteristicData:)
     func addCharacteristicToService(_ serviceUUID: String, characteristicUUID: String, permissions: UInt, properties: UInt, characteristicData: String) {
         let characteristicUUID = CBUUID(string: characteristicUUID)
-        let propertyValue = CBCharacteristicProperties(rawValue: properties)
-        let permissionValue = CBAttributePermissions(rawValue: permissions)
-        let byteData: Data = characteristicData.data(using: .utf8)!
-        let characteristic = CBMutableCharacteristic( type: characteristicUUID, properties: propertyValue, value: byteData, permissions: permissionValue)
+        let propertyValue = CBCharacteristicProperties.write
+        let permissionValue = CBAttributePermissions.writeable
+        let characteristic: CBMutableCharacteristic
+        if(characteristicData.isEmpty) {
+            characteristic = .init( type: characteristicUUID, properties: [.write, .writeWithoutResponse], value: nil, permissions: permissionValue)
+        } else {
+            let byteData: Data = characteristicData.data(using: .utf8)!
+            characteristic = .init( type: characteristicUUID, properties: propertyValue, value: byteData, permissions: permissionValue)
+        }
+        
         if(servicesMap[serviceUUID] != nil) {
             if(servicesMap[serviceUUID]!.characteristics != nil) {
                 servicesMap[serviceUUID]!.characteristics!.append(characteristic)
@@ -100,33 +106,41 @@ import CoreBluetooth
     
     //// EVENTS
     // Respond to Read request
-    func peripheralManager(peripheral: CBPeripheralManager, didReceiveReadRequest request: CBATTRequest)
+    public func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveRead request: CBATTRequest)
     {
         let characteristic = getCharacteristic(request.characteristic.uuid)
         if (characteristic != nil){
             request.value = characteristic?.value
             manager.respond(to: request, withResult: .success)
-            bleManager.printJS("characteristics \(request.value)")
+            bleManager.printJS("characteristics \(String(describing: request.value))")
         } else {
             bleManager.printJS("cannot read, characteristic not found")
         }
     }
 
+
     // Respond to Write request
-    func peripheralManager(peripheral: CBPeripheralManager, didReceiveWriteRequests requests: [CBATTRequest])
+    public func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveWrite requests: [CBATTRequest])
     {
-        for request in requests
-        {
-            let characteristic = getCharacteristic(request.characteristic.uuid)
-            if (characteristic == nil) { bleManager.printJS("characteristic for writing not found") }
-            if request.characteristic.uuid.isEqual(characteristic?.uuid)
-            {
-                let char = characteristic as! CBMutableCharacteristic
-                char.value = request.value
-            } else {
-                bleManager.printJS("characteristic you are trying to access doesn't match")
-            }
-        }
+        bleManager.printJS("write request received")
+        var map =  [String:Any]()
+         for request in requests
+         {
+             let characteristic = getCharacteristic(request.characteristic.uuid)
+             if (characteristic == nil) { bleManager.printJS("characteristic for writing not found") }
+             if request.characteristic.uuid.isEqual(characteristic?.uuid)
+             {
+                 let char = characteristic as! CBMutableCharacteristic
+                 char.value = request.value
+                 let data = char.value ?? Data()
+                 let byteArray = [UInt8](data)
+                 map["device"] = request.central.identifier.uuidString
+                 map["data"] = byteArray
+                 bleManager.sendJSEvent("BLEManagerDidRecieveData", message: (map as! [String : NSObject]))
+             } else {
+                 bleManager.printJS("characteristic you are trying to access doesn't match")
+             }
+         }
         manager.respond(to: requests[0], withResult: .success)
     }
 
@@ -181,6 +195,7 @@ import CoreBluetooth
         }
         
     }
+
     
     //// HELPERS
     func getCharacteristic(_ characteristicUUID: CBUUID) -> CBCharacteristic? {
