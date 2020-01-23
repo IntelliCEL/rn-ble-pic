@@ -48,8 +48,8 @@ import CoreBluetooth
     @objc(addCharacteristicToService:characteristicUUID:permissions:properties:characteristicData:)
     func addCharacteristicToService(_ serviceUUID: String, characteristicUUID: String, permissions: UInt, properties: UInt, characteristicData: String) {
         let characteristicUUID = CBUUID(string: characteristicUUID)
-        let propertyValue = CBCharacteristicProperties.write
-        let permissionValue = CBAttributePermissions.writeable
+        let propertyValue = CBCharacteristicProperties(rawValue: properties)
+        let permissionValue = CBAttributePermissions(rawValue: permissions)
         let characteristic: CBMutableCharacteristic
         if(characteristicData.isEmpty) {
             characteristic = .init( type: characteristicUUID, properties: [.write, .writeWithoutResponse], value: nil, permissions: permissionValue)

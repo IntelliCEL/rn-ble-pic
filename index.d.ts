@@ -126,4 +126,9 @@ declare module "rn-ble-pic" {
     peripheralID: string,
     serviceUUIDs: string[]
   ): Promise<boolean>;
+
+  export function requestMTU(
+    peripheralID: string,
+    mtu: int
+  ): Promise<int>;
 }
