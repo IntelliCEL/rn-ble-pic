@@ -3,11 +3,10 @@
 //  RNBlePic
 //
 //  Created by MAZ on 16/11/2019.
-//  Copyright © 2019 Facebook. All rights reserved.
 //
 
 #import "BLEManager.h"
-#import "RNBlePic-Swift.h"
+//#import "RNBlePic-Swift.h"
 //#import <RNBlePic/RNBlePic-Swift.h>
 #import "React/RCTBridge.h"
 #import "React/RCTConvert.h"
@@ -26,7 +25,7 @@ RCT_EXPORT_MODULE();
 @synthesize manager;
 @synthesize peripherals;
 @synthesize scanTimer;
-@synthesize bleAdvertiser;
+//@synthesize bleAdvertiser;
 
 bool hasListeners;
 bool isInitialized;
@@ -95,7 +94,6 @@ NSString *LOG_TAG;
     return @[@"BLEManagerDidUpdateValueForCharacteristic", @"BLEManagerStoppedScan", @"BLEManagerDiscoveredPeripheral", @"BLEManagerConnectPeripheral", @"BLEManagerDisconnectPeripheral", @"BLEManagerDidUpdateState", @"BLEManagerDidRecieveData"];
 }
 
-
 - (void)peripheral:(CBPeripheral *)peripheral didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic error:(NSError *)error {
     NSString *key = [self keyForPeripheral: peripheral andCharacteristic:characteristic];
     RCTResponseSenderBlock readCallback = [readCallbacks objectForKey:key];
@@ -146,28 +144,24 @@ NSString *LOG_TAG;
     }
 }
 
-
-
-
-- (NSString *) centralManagerStateToString: (int)state
+- (NSString *) centralManagerStateToString: (CBManagerState)state
 {
     switch (state) {
-        case CBCentralManagerStateUnknown:
+        case CBManagerStateUnknown:
             return @"unknown";
-        case CBCentralManagerStateResetting:
+        case CBManagerStateResetting:
             return @"resetting";
-        case CBCentralManagerStateUnsupported:
+        case CBManagerStateUnsupported:
             return @"unsupported";
-        case CBCentralManagerStateUnauthorized:
+        case CBManagerStateUnauthorized:
             return @"unauthorized";
-        case CBCentralManagerStatePoweredOff:
+        case CBManagerStatePoweredOff:
             return @"off";
-        case CBCentralManagerStatePoweredOn:
+        case CBManagerStatePoweredOn:
             return @"on";
         default:
             return @"unknown";
     }
-    
     return @"unknown";
 }
 
@@ -185,23 +179,21 @@ NSString *LOG_TAG;
         default:
             return @"unknown";
     }
-    
     return @"unknown";
 }
 
 - (NSString *) periphalManagerStateToString: (int)state
 {
     switch (state) {
-        case CBPeripheralManagerStateUnknown:
+        case CBManagerStateUnknown:
             return @"Unknown";
-        case CBPeripheralManagerStatePoweredOn:
+        case CBManagerStatePoweredOn:
             return @"PoweredOn";
-        case CBPeripheralManagerStatePoweredOff:
+        case CBManagerStatePoweredOff:
             return @"PoweredOff";
         default:
             return @"unknown";
     }
-    
     return @"unknown";
 }
 
@@ -1027,17 +1019,16 @@ RCT_EXPORT_METHOD(requestMTU:(NSString *)deviceUUID mtu:(NSInteger)mtu callback:
 -(void) printJS:(NSString*)message
 {
     NSString *str = [NSString stringWithFormat: @"%@ %@", LOG_TAG, message];
-    NSLog(str);
-//    RCTLogInfo(@"IOS MSG: (%lu): %@ ", LOG_TAG, message);
-//    if(hasListeners) {
-//        sendEvent(withName: "onWarning", body: message)
-//    }
+    NSLog(@"%@", str);
 }
 
 -(void) sendJSEvent:(NSString*)enventName message:(NSDictionary<NSString*, NSObject*>*)message
 {
     [self printJS:@"sending event"];
-    [self sendEventWithName:enventName body:message];
+//    NSLog( @"%@", message );
+    if (hasListeners) {
+        [self sendEventWithName:enventName body:message];
+    }
 }
 
 RCT_EXPORT_METHOD(
@@ -1052,7 +1043,7 @@ RCT_EXPORT_METHOD(
     manager = [[CBCentralManager alloc] initWithDelegate:self queue:queue options:initOptions];
         _sharedManager = manager;
 
-    bleAdvertiser = [BLEAdvertiser new];
+    bleAdvertiser = [[BLEAdvertiser alloc] init];
     [bleAdvertiser initialize:_instance];
     isInitialized = true;
     callback(@[]);
@@ -1078,8 +1069,8 @@ RCT_EXPORT_METHOD(
 RCT_EXPORT_METHOD(
     addCharacteristicToService: (NSString *)serviceUUID
     uuid:                       (NSString *)uuid
-    permissions:                (NSInteger *)permissions
-    properties:                 (NSInteger *)properties
+    permissions:                (NSUInteger)permissions
+    properties:                 (NSUInteger)properties
     data:                       (NSString *)data
 ) {
     if(isInitialized) {

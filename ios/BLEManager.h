@@ -3,11 +3,11 @@
 //  RNBlePic
 //
 //  Created by MAZ on 16/11/2019.
-//  Copyright © 2019 Facebook. All rights reserved.
 //
 
 #import "React/RCTBridgeModule.h"
 #import "React/RCTEventEmitter.h"
+#import "BLEAdvertiser.h"
 #import <CoreBluetooth/CoreBluetooth.h>
 
 @class BLEAdvertiser;
@@ -23,13 +23,14 @@
     NSMutableDictionary *notificationCallbacks;
     NSMutableDictionary *stopNotificationCallbacks;
     NSMutableDictionary *retrieveServicesLatches;
+    BLEAdvertiser *bleAdvertiser;
 }
 
 @property (strong, nonatomic) NSMutableSet *peripherals;
 @property (strong, nonatomic) CBCentralManager *manager;
 @property (weak, nonatomic) NSTimer *scanTimer;
 
-@property (strong, nonatomic) BLEAdvertiser *bleAdvertiser;
+//@property (strong, nonatomic) BLEAdvertiser *bleAdvertiser;
 
 // Returns the static CBCentralManager instance used by this library.
 // May have unexpected behavior when using multiple instances of CBCentralManager.

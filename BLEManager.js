@@ -4,12 +4,11 @@ var bleManager = React.NativeModules.BLEManager;
 
 class BLEManager {
   constructor() {
-    this.isPeripheralConnected = this.isPeripheralConnected.bind(this);
     this.isInitialized = false;
   }
 
   //////
-  init() {
+  init = () => {
     return new Promise((fulfill, reject) => {
       bleManager.init(error => {
         if (error) {
@@ -22,11 +21,11 @@ class BLEManager {
     });
   }
 
-  hasInitialized() {
+  hasInitialized = () => {
     return this.isInitialized;
   }
 
-  enableBluetooth() {
+  enableBluetooth = () => {
     return new Promise((fulfill, reject) => {
       bleManager.enableBluetooth(error => {
         if (error != null) {
@@ -38,27 +37,27 @@ class BLEManager {
     });
   }
 
-  checkState() {
+  checkState = () => {
     bleManager.checkState();
   }
 
   /** BLE ADVERTISING SECTION START */
 
-  setPeripheralName(name) {
+  setPeripheralName = (name) => {
     return bleManager.setPeripheralName(name);
   }
 
-  addService(serviceUUID, primary) {
+  addService = (serviceUUID, primary) => {
     return bleManager.addService(serviceUUID, primary);
   }
 
-  addCharacteristicToService(
+  addCharacteristicToService = (
     serviceUUID,
     charUUID,
     permissions,
     properties,
     data = null
-  ) {
+  ) => {
     return bleManager.addCharacteristicToService(
       serviceUUID,
       charUUID,
@@ -68,7 +67,7 @@ class BLEManager {
     );
   }
 
-  startAdvertising() {
+  startAdvertising = () => {
     return new Promise((fulfill, reject) => {
       bleManager.startAdvertising(error => {
         if (error) {
@@ -80,11 +79,11 @@ class BLEManager {
     });
   }
 
-  isAdvertising() {
+  isAdvertising = () => {
     return bleManager.isAdvertising();
   }
 
-  stopAdvertising() {
+  stopAdvertising = () => {
     return bleManager.stopAdvertising();
   }
 
@@ -92,7 +91,7 @@ class BLEManager {
 
   /** BLE SCANNING SECTION START */
 
-  startScan(serviceUUIDs, seconds, allowDuplicates, scanningOptions = {}) {
+  startScan = (serviceUUIDs, seconds, allowDuplicates, scanningOptions = {}) => {
     return new Promise((fulfill, reject) => {
       if (allowDuplicates == null) {
         allowDuplicates = false;
@@ -130,7 +129,7 @@ class BLEManager {
     });
   }
 
-  stopScan() {
+  stopScan = () => {
     return new Promise((fulfill, reject) => {
       bleManager.stopScan(error => {
         if (error != null) {
@@ -142,7 +141,7 @@ class BLEManager {
     });
   }
 
-  connect(peripheralId) {
+  connect = (peripheralId) => {
     return new Promise((fulfill, reject) => {
       bleManager.connect(peripheralId, error => {
         if (error) {
@@ -154,7 +153,7 @@ class BLEManager {
     });
   }
 
-  disconnect(peripheralId, force = true) {
+  disconnect = (peripheralId, force = true) => {
     return new Promise((fulfill, reject) => {
       bleManager.disconnect(peripheralId, force, error => {
         if (error) {
@@ -166,7 +165,7 @@ class BLEManager {
     });
   }
 
-  retrieveServices(peripheralId, services) {
+  retrieveServices = (peripheralId, services) => {
     return new Promise((fulfill, reject) => {
       bleManager.retrieveServices(
         peripheralId,
@@ -182,7 +181,7 @@ class BLEManager {
     });
   }
 
-  startNotification(peripheralId, serviceUUID, characteristicUUID) {
+  startNotification = (peripheralId, serviceUUID, characteristicUUID) => {
     return new Promise((fulfill, reject) => {
       bleManager.startNotification(
         peripheralId,
@@ -199,7 +198,7 @@ class BLEManager {
     });
   }
 
-  stopNotification(peripheralId, serviceUUID, characteristicUUID) {
+  stopNotification = (peripheralId, serviceUUID, characteristicUUID) => {
     return new Promise((fulfill, reject) => {
       bleManager.stopNotification(
         peripheralId,
@@ -216,7 +215,7 @@ class BLEManager {
     });
   }
 
-  write(peripheralId, serviceUUID, characteristicUUID, data, maxByteSize) {
+  write = (peripheralId, serviceUUID, characteristicUUID, data, maxByteSize) => {
     if (maxByteSize == null) {
       maxByteSize = 20;
     }
@@ -238,14 +237,14 @@ class BLEManager {
     });
   }
 
-  writeWithoutResponse(
+  writeWithoutResponse = (
     peripheralId,
     serviceUUID,
     characteristicUUID,
     data,
     maxByteSize,
     queueSleepTime
-  ) {
+  ) => {
     if (maxByteSize == null) {
       maxByteSize = 20;
     }
@@ -271,7 +270,7 @@ class BLEManager {
     });
   }
 
-  read(peripheralId, serviceUUID, characteristicUUID) {
+  read = (peripheralId, serviceUUID, characteristicUUID) => {
     return new Promise((fulfill, reject) => {
       bleManager.read(
         peripheralId,
@@ -288,7 +287,7 @@ class BLEManager {
     });
   }
 
-  getDiscoveredPeripherals() {
+  getDiscoveredPeripherals = () => {
     return new Promise((fulfill, reject) => {
       bleManager.getDiscoveredPeripherals((error, result) => {
         if (error) {
@@ -304,7 +303,7 @@ class BLEManager {
     });
   }
 
-  getConnectedPeripherals(serviceUUIDs) {
+  getConnectedPeripherals = (serviceUUIDs) => {
     return new Promise((fulfill, reject) => {
       bleManager.getConnectedPeripherals(serviceUUIDs, (error, result) => {
         if (error) {
@@ -320,7 +319,7 @@ class BLEManager {
     });
   }
 
-  removePeripheral(peripheralId) {
+  removePeripheral = (peripheralId) => {
     return new Promise((fulfill, reject) => {
       bleManager.removePeripheral(peripheralId, error => {
         if (error) {
@@ -332,7 +331,7 @@ class BLEManager {
     });
   }
 
-  isPeripheralConnected(peripheralId, serviceUUIDs) {
+  isPeripheralConnected = (peripheralId, serviceUUIDs) => {
     return this.getConnectedPeripherals(serviceUUIDs).then(result => {
       if (
         result.find(p => {
@@ -346,7 +345,7 @@ class BLEManager {
     });
   }
 
-  requestMTU(peripheralId, mtu) {
+  requestMTU = (peripheralId, mtu) => {
     return new Promise((fulfill, reject) => {
       bleManager.requestMTU(peripheralId, mtu, (error, mtu) => {
         if (error) {
